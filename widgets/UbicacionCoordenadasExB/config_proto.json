@@ -1,0 +1,18 @@
+{
+  "featureLayerDestino": {
+    "titulo": "Ubicación de Coordenadas",
+    "camposCalculados": {
+      "campoFecha": "Fecha",
+      "campoLatitud": "Latitud",
+      "campoLongitud": "Longitud"
+    },
+    "intersecciones": [
+      {
+        "nombre": "Turnos",
+        "campoDestino": "Turno",
+        "tituloCapaFuente": "Turnos",
+        "campoFuente": "TURNO"
+      }
+    ] 
+  }
+}

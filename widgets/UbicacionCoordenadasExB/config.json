@@ -1,0 +1,18 @@
+{
+  "featureLayerDestino": {
+    "titulo": "Consulta Turnos",
+    "camposCalculados": {
+      "campoFecha": "FechaConsulta",
+      "campoLatitud": "Latitud",
+      "campoLongitud": "Longitud"
+    },
+    "intersecciones": [
+      {
+        "nombre": "Turnos",
+        "campoDestino": "TurnoRestriccion",
+        "tituloCapaFuente": "Esquema Restriccion",
+        "campoFuente": "TURNO"
+      }
+    ]
+  }
+}
