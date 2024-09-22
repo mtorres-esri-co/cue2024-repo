@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { React } from 'jimu-core'
+import { Immutable, React, JimuFieldType, DataSourceTypes, getAppStore, appActions, DataSource, DataSourceComponent, DataSourceManager } from 'jimu-core'
 import { type AllWidgetSettingProps } from 'jimu-for-builder'
 import { JimuMapViewComponent, type JimuMapView } from 'jimu-arcgis'
-import { Button, AdvancedSelect, Option, TextInput } from 'jimu-ui'
+import { Button } from 'jimu-ui'
 import { SettingSection, MapWidgetSelector, JimuLayerViewSelectorDropdown } from 'jimu-ui/advanced/setting-components'
+import { FieldSelector } from 'jimu-ui/advanced/data-source-selector'
 import { type IMConfig } from '../config'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
   const __tituloCapaDestino = props.config.featureLayerDestino.titulo
   let __campoFecha = props.config.featureLayerDestino.camposCalculados.campoFecha
   let __campoLatitud = props.config.featureLayerDestino.camposCalculados.campoLatitud
   let __campoLongitud = props.config.featureLayerDestino.camposCalculados.campoLongitud
-  let __intersecciones = props.config.featureLayerDestino.intersecciones
+  const __intersecciones = props.config.featureLayerDestino.intersecciones
 
   console.log('props.config')
   console.log(props.config)
@@ -23,9 +24,16 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
   let __interseccion = null
 
   let map = null
-  const [capasDestinoSelectValue, setcapasDestinoValue] = useState('')
   const [mapViewId, setMapViewId] = useState('')
-  const [capasDestinoSelectOptions, setCapasDestinoSelectOptions] = useState([])
+  const [capasDestinoSelectValue, setcapasDestinoValue] = useState('')
+  const [intersecciones, setIntersecciones] = useState([])
+
+  const allDsIds = useRef<string[]>([])
+  console.log('allDsIds')
+  console.log(allDsIds)
+
+  console.log('props.useDataSources')
+  console.log(props.useDataSources)
 
   const onMapWidgetSelected = (useMapWidgetIds: string[]) => {
     props.onSettingChange({
@@ -46,7 +54,6 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
         if (layerViews[key].id === __tituloCapaDestino || layerViews[key].layer.title === __tituloCapaDestino) {
           setcapasDestinoValue(layerViews[key].id)
           console.log(__tituloCapaDestino)
-          console.log(layerViews[key].id)
         }
       }
     } else {
@@ -87,21 +94,8 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
       polygonLayerOptions.push({ label: layer.title, value: layer.title })
     })
 
-    setCapasDestinoSelectOptions(pointFeatureLayers)
-    __capaDestinoSelect.props.children = capasDestinoSelectOptions.map(op => {
-      console.log(op)
-      return (
-        <Option value= {op.value} key={op.value}>
-          {op.label}
-        </Option>
-      )
-    })
-
     console.log(pointLayerOptions)
     console.log(polygonLayerOptions)
-
-    console.log('__capaDestinoSelect')
-    console.log(__capaDestinoSelect)
 
     if (__intersecciones.length > 0) {
       __interseccion = __intersecciones[0]
@@ -115,11 +109,6 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
     __intersecciones.forEach(item => {
       interseccionesOptions.push({ value: item.nombre, label: item.nombre })
     })
-    __interseccionesSelect.props.options = interseccionesOptions
-    if (__interseccion !== undefined) {
-      __interseccionesSelect.props.value = __interseccion.nombre
-      __nombreInterseccionTextArea.props.value = __interseccion.nombre
-    }
   }
 
   const _setCapaDestino = (value: any) => {
@@ -138,17 +127,9 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
 
   const _setInterseccion = (value: any) => {
     console.log('_setInterseccion(' + value + ')')
-    __nombreInterseccionTextArea.props.value = value
     __interseccion = __intersecciones.find(item => {
       return item.nombre === value
     })
-    if (__interseccion !== undefined) {
-      __capaOrigenSelect.props.enabled = true
-      __campoFuenteSelect.props.enabled = true
-      __campoDestinoSelect.props.enabled = true
-      __capaOrigenSelect.props.value = __interseccion.tituloCapaFuente
-      __campoDestinoSelect.props.value = __interseccion.campoDestino
-    }
   }
 
   const _setCapaOrigen = (value: any) => {
@@ -161,41 +142,28 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
     }
     if (__interseccion !== undefined) {
       __interseccion.tituloCapaFuente = value
-      __campoFuenteSelect.props.value = __interseccion.campoFuente
     }
   }
 
   const _setCamposFuente = (featureLayer) => {
     console.log('_setCamposFuente')
     const options = _getFieldNamesByType(featureLayer, 'esriFieldTypeString')
-    __campoFuenteSelect.props.optiones = options
   }
 
   const _setCamposFecha = (featureLayer) => {
     console.log('_setCamposFecha')
-    const options = _getFieldNamesByType(featureLayer, 'esriFieldTypeDate')
-    __campoFechaSelect.props.options = options
-    __campoFechaSelect.props.value = __campoFecha
   }
 
   const _setCamposLatitud = (featureLayer) => {
     console.log('_setCamposLatitud')
-    const options = _getFieldNamesByType(featureLayer, 'esriFieldTypeString')
-    __campoLatitudSelect.props.options = options
-    __campoLatitudSelect.props.value = __campoLatitud
   }
 
   const _setCamposLongitud = (featureLayer) => {
     console.log('_setCamposLongitud')
-    const options = _getFieldNamesByType(featureLayer, 'esriFieldTypeString')
-    __campoLongitudSelect.props.options = options
-    __campoLongitudSelect.props.value = __campoLongitud
   }
 
   const _setCamposDestino = (featureLayer) => {
     console.log('_setCamposDestino')
-    const options = _getFieldNamesByType(featureLayer, 'esriFieldTypeString')
-    __campoDestinoSelect.props.options = options
   }
 
   const _setCampoFuente = (value) => {
@@ -255,14 +223,17 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
 
   const _addInterseccion = () => {
     console.log('_addInterseccion')
-    const newLength = __intersecciones.length + 1
-    __intersecciones.push({
+    const _intersecciones = intersecciones
+
+    const newLength = intersecciones.length + 1
+    _intersecciones.push({
       nombre: 'Intersección #' + newLength,
       campoDestino: '',
       tituloCapaFuente: '',
       campoFuente: ''
     })
-    __interseccion = __intersecciones[newLength - 1]
+    __interseccion = _intersecciones[newLength - 1]
+    setIntersecciones(_intersecciones)
     _setIntersecciones()
   }
 
@@ -276,51 +247,26 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
     }
   }
 
-  const __capaDestinoSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCapaDestino} />
+  const _capasDestinoHideLayers = (layer, layers) => {
+    console.log('_capasDestinoHideLayers')
+    console.log(layer)
+    console.log(layers)
+    return false
+  }
 
-  const __campoFechaSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCampoFecha} />
+  const __capaDestinoLayerViewSelector = <JimuLayerViewSelectorDropdown
+      isMultiSelection={false}
+      jimuMapViewId={mapViewId}
+      defaultSelectedValues={[capasDestinoSelectValue]}
+      hideLayers={_capasDestinoHideLayers}
+      onChange={(s) => { _setCapaDestino(s) }}
+    />
 
-  const __campoLatitudSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCampoLatitud} />
-
-  const __campoLongitudSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCampoLongitud} />
-
-  const __interseccionesSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setInterseccion} />
-
-  const __nombreInterseccionTextArea = <TextInput id="nombreInterseccionTextArea"
-    aria-required={true}
-    disabled = { false }
-    style={{ width: '100%' }}
-    onChange={_setNombreInterseccion} />
-
-  const __capaOrigenSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCapaOrigen} />
-
-  const __campoFuenteSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCampoFuente} />
-
-  const __campoDestinoSelect = <AdvancedSelect
-    aria-required={true}
-    style={{ width: '100%' }}
-    onChange={_setCampoDestino} />
+  const __campoFechaFieldSelect = <FieldSelector
+      isMultiple = {false}
+      useDropdown = {true}
+      types = {Immutable([JimuFieldType.Date])}
+    />
 
   const __addInterseccionButton = <Button id = "addInterseccionButton"
     className="jimu-btn"
@@ -350,21 +296,18 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
               <label htmlFor="capaDestinoSelect">Capa:</label>
             </td>
             <td className="lista">
-            <JimuLayerViewSelectorDropdown
-                isMultiSelection={false}
-                jimuMapViewId={mapViewId}
-                defaultSelectedValues={[capasDestinoSelectValue]}
-                onChange={(s) => { _setCapaDestino(s) }}/>
+              {__capaDestinoLayerViewSelector}
             </td>
           </tr>
-          {/* <tr>
+          <tr>
             <td className="etiqueta">
               <label htmlFor="campoFechaSelect">Campo Fecha:</label>
             </td>
             <td className="lista">
-              {__campoFechaSelect}
+              {__campoFechaFieldSelect}
             </td>
           </tr>
+          {/*
           <tr>
             <td className="etiqueta">
               <label htmlFor="campoLatitudSelect">Campo Latitud:</label>
