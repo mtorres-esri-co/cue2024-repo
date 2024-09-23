@@ -64,15 +64,6 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     _resultsContentDiv.current.style.height = hcc + 'px'
   }
 
-  //   fillHeight: function () {
-  //     var panelDom = dom.byId(this._parentId);
-  //     var panelInfo = dojo.position(panelDom);
-  //     var contentInfo = dojo.position(this._contentDiv);
-  //     var hcc = panelInfo.h + panelInfo.y - contentInfo.y - 20;
-
-  //     domStyle.set(this._contentDiv, 'height', hcc + 'px');
-  // },
-
   /* Handlers */
   const _jimuMapViewActiveViewChange = (jmv: JimuMapView) => {
     console.log('_jimuMapViewActiveViewChange')
@@ -81,20 +72,26 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     if (jmv) {
       setJimuMapView(jmv)
       const layerViews = jmv.jimuLayerViews
-
+      console.log('layerViews')
+      console.log(layerViews)
       for (const key in layerViews) {
-        if (layerViews[key].id === __tituloCapaDestino || layerViews[key].layer.title === __tituloCapaDestino) {
+        console.log(key)
+        console.log(layerViews[key].id)
+        console.log(layerViews[key].layer.title)
+
+        if (layerViews[key].layer.title === __tituloCapaDestino) {
           setFeatureLayerDestino(layerViews[key].layer)
           layerViews[key].layer.fields.forEach(field => {
-            if (field.name === __campoFecha) {
+            console.log(field.name + ' - ' + field.alias)
+            if (field.name.toLowerCase() === __campoFecha.toLowerCase()) {
               setLabelCampoFecha(field.alias)
-            } else if (field.name === __campoLatitud) {
+            } else if (field.name.toLowerCase() === __campoLatitud.toLowerCase()) {
               setLabelCampoLatitud(field.alias)
-            } else if (field.name === __campoLongitud) {
+            } else if (field.name.toLowerCase() === __campoLongitud.toLowerCase()) {
               setLabelCampoLongitud(field.alias)
             } else {
               __intersecciones.forEach(item => {
-                if (field.name === item.campoDestino) {
+                if (field.name.toLowerCase() === item.campoDestino.toLowerCase()) {
                   setLabelCampoDestino(field.alias)
                 }
               })
@@ -164,6 +161,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
       jimuMapView.view.graphics.add(graphic)
       jimuMapView.view.center = point
       jimuMapView.view.zoom = 12
+
       console.log('Coordenadas válidas')
       const _valoresInterseccion = []
       __intersecciones.forEach(async item => {
@@ -240,17 +238,18 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
       const attributes = {}
 
       featureLayerDestino.fields.forEach(fi => {
-        const xx = valoresInterseccion.find(item => fi.name === item.campoDestino)
-        console.log('xx')
-        console.log(xx)
+        console.log('fi.name')
         console.log(fi.name)
-        if (fi.name === __campoFecha) {
-          attributes[fi.name] = fechaConsulta
-        } else if (fi.name === __campoLatitud) {
+        const xx = valoresInterseccion.find(item => fi.name === item.campoDestino)
+        console.log('campoDestino')
+        console.log(xx)
+        if (fi.name.toLowerCase() === __campoFecha.toLowerCase()) {
+          attributes[fi.name] = fechaConsulta.getTime()
+        } else if (fi.name.toLowerCase() === __campoLatitud.toLowerCase()) {
           attributes[fi.name] = latitude
-        } else if (fi.name === __campoLongitud) {
+        } else if (fi.name.toLowerCase() === __campoLongitud.toLowerCase()) {
           attributes[fi.name] = longitude
-        } else if (fi.name === valoresInterseccion[0].campoDestino) {
+        } else if (fi.name.toLowerCase() === valoresInterseccion[0].campoDestino.toLowerCase()) {
           attributes[fi.name] = valorInterseccion
         }
         console.log(fi.name + ' = ' + attributes[fi.name])
@@ -276,6 +275,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     setSaveButtonDisabled(true)
     setLocateButtonDisabled(false)
     setDismissButtonDisabled(true)
+    _resultsContentDiv.current.style.display = 'none'
   }
 
   //   _saveLocation: async function () {
