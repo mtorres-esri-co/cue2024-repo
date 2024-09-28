@@ -2,6 +2,7 @@
 import { React, type AllWidgetProps } from 'jimu-core'
 import { JimuMapViewComponent, type JimuMapView } from 'jimu-arcgis'
 import { NumericInput, Select, Button, Checkbox, Label, TextInput, Option } from 'jimu-ui'
+import { DatePicker } from 'jimu-ui/basic/date-picker'
 import { type IMConfig } from '../config'
 import { useState, useRef } from 'react'
 import Point from '@arcgis/core/geometry/Point'
@@ -9,7 +10,6 @@ import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol'
 import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol'
 import Color from '@arcgis/core/Color'
 import Graphic from '@arcgis/core/Graphic'
-import { DatePicker } from 'jimu-ui/basic/date-picker'
 
 const Widget = (props: AllWidgetProps<IMConfig>) => {
   const __tituloCapaDestino = props.config.featureLayerDestino.titulo
@@ -57,7 +57,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     const widgetDom = document.getElementById(props.id)
     console.log(widgetDom)
 
-    const panelDom = document.getElementById('widget-ubicacion-coordenadas')
+    const panelDom = document.getElementById('widget-ubicacion-coordenadas-exb')
     const panelInfo = panelDom.getBoundingClientRect()
     const contentInfo = _resultsContentDiv.current.getBoundingClientRect()
     const hcc = panelInfo.height + panelInfo.top - contentInfo.top - 20
@@ -415,7 +415,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     onClick={_dismissLocation}>Descartar</Button>
 
   return (
-    <div id='widget-ubicacion-coordenadas' className='widget-ubicacion-coordenadas jimu-widget'>
+    <div id='widget-ubicacion-coordenadas-exb' className='widget-ubicacion-coordenadas jimu-widget'>
       {props.useMapWidgetIds && props.useMapWidgetIds.length === 1 && (
         <JimuMapViewComponent useMapWidgetId={props.useMapWidgetIds?.[0]} onActiveViewChange={_jimuMapViewActiveViewChange} />
       )}
