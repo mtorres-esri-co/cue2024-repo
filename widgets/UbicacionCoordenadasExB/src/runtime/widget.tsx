@@ -115,74 +115,98 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
 
   const _locateCoordinates = async () => {
     const normal = true
-    let x
-    let y
+    let x, y
     if (normal) {
       if (!formatCheckBoxChecked) {
-        console.log('Grados Minutos Segundos')
-        const yd = latDegrees !== undefined ? latDegrees : _latDegreesNumericInput.props.defaultValue
-        const ym = latMinutes !== undefined ? latMinutes : _latMinutesNumericInput.props.defaultValue
-        const ys = latSeconds !== undefined ? latSeconds : _latSecondsNumericInput.props.defaultValue
-        const yq = latQuadrante !== undefined ? latQuadrante : _latQuadranteSelect.props.defaultValue
-
-        const xd = lonDegrees !== undefined ? lonDegrees : _lonDegreesNumericInput.props.defaultValue
-        const xm = lonMinutes !== undefined ? lonMinutes : _lonMinutesNumericInput.props.defaultValue
-        const xs = lonSeconds !== undefined ? lonSeconds : _lonSecondsNumericInput.props.defaultValue
-        const xq = lonQuadrante !== undefined ? lonQuadrante : _lonQuadranteSelect.props.defaultValue
-
-        x = (xd + xm / 60 + xs / 3600) * (xq === 'E' ? 1.0 : -1.0)
-        y = (yd + ym / 60 + ys / 3600) * (yq === 'N' ? 1.0 : -1.0)
-        setLongitude(x)
-        setLatitude(y)
-        console.log('lat:' + y + ', lon:' + x)
+        ({ x, y } = calculateDMSCoordinates())
       } else {
-        console.log('Grados Decimales')
-        x = lonDecimalDegrees !== undefined ? lonDecimalDegrees : _lonDecimalDegreesLatitudeNumericInput.props.defaultValue
-        y = latDecimalDegrees !== undefined ? latDecimalDegrees : _latDecimalDegreesLatitudeNumericInput.props.defaultValue
-        setLongitude(x)
-        setLatitude(y)
-        console.log('lat:' + y + ', lon:' + x)
+        ({ x, y } = calculateDecimalCoordinates())
       }
-      const point = new Point({ x: x, y: y })
-      const outlineSymbol = new SimpleLineSymbol()
-      outlineSymbol.width = 2
-      outlineSymbol.color = new Color([0, 115, 76, 1])
-
-      const markerSymbol = new SimpleMarkerSymbol()
-      markerSymbol.color = new Color([0, 255, 197, 0.50])
-      markerSymbol.outline = outlineSymbol
-
-      const graphic = new Graphic({
-        geometry: point,
-        symbol: markerSymbol
-      })
-
-      jimuMapView.view.graphics.removeAll()
-      jimuMapView.view.graphics.add(graphic)
-      jimuMapView.view.center = point
-      jimuMapView.view.zoom = 12
-
-      console.log('Coordenadas válidas')
-      const _valoresInterseccion = []
-      __intersecciones.forEach(async item => {
-        const valor = await _getIntersectedFeatureValue(item.tituloCapaFuente, point, item.campoFuente)
-        console.log('Valor de intersección: ' + valor)
-        _valoresInterseccion.push({ campoDestino: item.campoDestino, valor: valor })
-        setValorInterseccion(valor)
-        setValoresInterseccion(_valoresInterseccion)
-        console.log(item.campoDestino + " = '" + valor + "'")
-        console.log(_valoresInterseccion)
-        console.log(valoresInterseccion)
-        console.log(_valoresInterseccion[0].valor)
-        console.log(valoresInterseccion[0].valor)
-      })
-
+      setCoordinates(x, y)
+      const point = createPoint(x, y)
+      const graphic = createGraphic(point)
+      updateMapView(graphic, point)
+      await handleIntersections(point)
       setAddButtonDisabled(false)
       setDismissButtonDisabled(false)
       setLocateButtonDisabled(true)
     } else {
       console.log('Coordenadas inválidas')
       _messageDiv.current.innerHTML = 'Coordenadas inválidas'
+    }
+  }
+
+  const calculateDMSCoordinates = () => {
+    console.log('Grados Minutos Segundos')
+    const yd = latDegrees ?? _latDegreesNumericInput.props.defaultValue
+    const ym = latMinutes ?? _latMinutesNumericInput.props.defaultValue
+    const ys = latSeconds ?? _latSecondsNumericInput.props.defaultValue
+    const yq = latQuadrante ?? _latQuadranteSelect.props.defaultValue
+
+    const xd = lonDegrees ?? _lonDegreesNumericInput.props.defaultValue
+    const xm = lonMinutes ?? _lonMinutesNumericInput.props.defaultValue
+    const xs = lonSeconds ?? _lonSecondsNumericInput.props.defaultValue
+    const xq = lonQuadrante ?? _lonQuadranteSelect.props.defaultValue
+
+    const x = (xd + xm / 60 + xs / 3600) * (xq === 'E' ? 1.0 : -1.0)
+    const y = (yd + ym / 60 + ys / 3600) * (yq === 'N' ? 1.0 : -1.0)
+    console.log('lat:' + y + ', lon:' + x)
+    return { x, y }
+  }
+
+  const calculateDecimalCoordinates = () => {
+    console.log('Grados Decimales')
+    const x = lonDecimalDegrees ?? _lonDecimalDegreesLatitudeNumericInput.props.defaultValue
+    const y = latDecimalDegrees ?? _latDecimalDegreesLatitudeNumericInput.props.defaultValue
+    console.log('lat:' + y + ', lon:' + x)
+    return { x, y }
+  }
+
+  const setCoordinates = (x, y) => {
+    setLongitude(x)
+    setLatitude(y)
+  }
+
+  const createPoint = (x, y) => {
+    return new Point({ x: x, y: y })
+  }
+
+  const createGraphic = (point) => {
+    const outlineSymbol = new SimpleLineSymbol()
+    outlineSymbol.width = 2
+    outlineSymbol.color = new Color([0, 115, 76, 1])
+
+    const markerSymbol = new SimpleMarkerSymbol()
+    markerSymbol.color = new Color([0, 255, 197, 0.50])
+    markerSymbol.outline = outlineSymbol
+
+    return new Graphic({
+      geometry: point,
+      symbol: markerSymbol
+    })
+  }
+
+  const updateMapView = (graphic, point) => {
+    jimuMapView.view.graphics.removeAll()
+    jimuMapView.view.graphics.add(graphic)
+    jimuMapView.view.center = point
+    jimuMapView.view.zoom = 12
+  }
+
+  const handleIntersections = async (point) => {
+    console.log('Coordenadas válidas')
+    const _valoresInterseccion = []
+    for (const item of __intersecciones) {
+      const valor = await _getIntersectedFeatureValue(item.tituloCapaFuente, point, item.campoFuente)
+      console.log('Valor de intersección: ' + valor)
+      _valoresInterseccion.push({ campoDestino: item.campoDestino, valor: valor })
+      setValorInterseccion(valor)
+      setValoresInterseccion(_valoresInterseccion)
+      console.log(item.campoDestino + " = '" + valor + "'")
+      console.log(_valoresInterseccion)
+      console.log(valoresInterseccion)
+      console.log(_valoresInterseccion[0].valor)
+      console.log(valoresInterseccion[0].valor)
     }
   }
 
